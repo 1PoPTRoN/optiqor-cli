@@ -100,9 +100,8 @@ func TestImagePinnedLatest_NoImage(t *testing.T) {
 	}
 }
 
-// Sanity check that All() returns the expected detector count and
-// that every ID is unique. Update the count when new detectors are
-// added; the IDs themselves are stable wire format.
+// TestAll_DetectorCountAndUniqueIDs guards the wire-stable detector
+// IDs and the Phase 3 count (15 cost + 15 security).
 func TestAll_DetectorCountAndUniqueIDs(t *testing.T) {
 	const want = 31 // 16 cost + 15 security (idle-workload added 2026-05-18)
 	dets := All()
