@@ -108,7 +108,6 @@ sniffer:
     repository: example/sniffer
     tag: "v1.0.0"
   replicas: 1
-  hostNetwork: true
   resources:
     requests:
       cpu: "50m"
@@ -124,6 +123,8 @@ sniffer:
     runAsNonRoot: true
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
+  podSecurityContext:
+    hostNetwork: true
 
 bursty:
   image:
@@ -185,7 +186,6 @@ ptrace-hunter:
     repository: example/profiler
     tag: "v0.7.2"
   replicas: 1
-  hostPID: true
   resources:
     requests:
       cpu: "100m"
@@ -198,6 +198,8 @@ ptrace-hunter:
     runAsNonRoot: false
     capabilities:
       add: [SYS_PTRACE]
+  podSecurityContext:
+    hostPID: true
   automountServiceAccountToken: false
 
 incomplete:
@@ -225,7 +227,6 @@ memhog:
     repository: example/memhog
     tag: "v0.2.0"
   replicas: 1
-  hostIPC: true
   resources:
     requests:
       memory: "16Mi"
@@ -235,6 +236,8 @@ memhog:
     allowPrivilegeEscalation: false
     capabilities:
       drop: [ALL]
+  podSecurityContext:
+    hostIPC: true
   automountServiceAccountToken: false
 
 guaranteed:

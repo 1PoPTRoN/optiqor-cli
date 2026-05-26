@@ -302,23 +302,7 @@ func readHasHPA(n *yaml.Node) bool {
 func readSecurity(n *yaml.Node) SecurityContext {
 	var sec SecurityContext
 
-	for _, key := range [][2]string{
-		{"hostNetwork", "HostNetwork"},
-		{"hostPID", "HostPID"},
-		{"hostIPC", "HostIPC"},
-	} {
-		if v := findChild(n, key[0]); v != nil && v.Kind == yaml.ScalarNode {
-			b := boolValue(v.Value)
-			switch key[1] {
-			case "HostNetwork":
-				sec.HostNetwork = &b
-			case "HostPID":
-				sec.HostPID = &b
-			case "HostIPC":
-				sec.HostIPC = &b
-			}
-		}
-	}
+	applyHostNamespaceFields(n, &sec)
 
 	if amt := findChild(n, "automountServiceAccountToken"); amt != nil && amt.Kind == yaml.ScalarNode {
 		b := boolValue(amt.Value)
@@ -348,6 +332,7 @@ func readSecurity(n *yaml.Node) SecurityContext {
 }
 
 func applySecFields(ctx *yaml.Node, out *SecurityContext) {
+	applyHostNamespaceFields(ctx, out)
 	if v := findChild(ctx, "runAsNonRoot"); v != nil && v.Kind == yaml.ScalarNode {
 		b := boolValue(v.Value)
 		out.RunAsNonRoot = &b
@@ -374,6 +359,26 @@ func applySecFields(ctx *yaml.Node, out *SecurityContext) {
 		out.CapabilitiesAdd = readStringList(findChild(caps, "add"))
 		out.CapabilitiesDrop = readStringList(findChild(caps, "drop"))
 	}
+}
+
+func applyHostNamespaceFields(ctx *yaml.Node, out *SecurityContext) {
+	if v := findChild(ctx, "hostNetwork"); v != nil && v.Kind == yaml.ScalarNode {
+		setHostNamespaceBool(&out.HostNetwork, boolValue(v.Value))
+	}
+	if v := findChild(ctx, "hostPID"); v != nil && v.Kind == yaml.ScalarNode {
+		setHostNamespaceBool(&out.HostPID, boolValue(v.Value))
+	}
+	if v := findChild(ctx, "hostIPC"); v != nil && v.Kind == yaml.ScalarNode {
+		setHostNamespaceBool(&out.HostIPC, boolValue(v.Value))
+	}
+}
+
+func setHostNamespaceBool(dst **bool, v bool) {
+	if *dst != nil && **dst {
+		return
+	}
+	b := v
+	*dst = &b
 }
 
 func readStringList(n *yaml.Node) []string {

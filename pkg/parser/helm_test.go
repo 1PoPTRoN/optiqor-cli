@@ -124,6 +124,51 @@ mike:
 				}
 			},
 		},
+		{
+			name: "nested-host-namespace-fields",
+			in: `
+agent:
+  resources:
+    requests:
+      cpu: 50m
+  podSecurityContext:
+    hostNetwork: true
+    hostPID: true
+    hostIPC: true
+`,
+			check: func(t *testing.T, wls []Workload) {
+				t.Helper()
+				if len(wls) != 1 {
+					t.Fatalf("expected 1 workload, got %+v", wls)
+				}
+				assertBoolPtr(t, "hostNetwork", wls[0].Security.HostNetwork, true)
+				assertBoolPtr(t, "hostPID", wls[0].Security.HostPID, true)
+				assertBoolPtr(t, "hostIPC", wls[0].Security.HostIPC, true)
+			},
+		},
+		{
+			name: "host-namespace-true-wins-across-locations",
+			in: `
+agent:
+  hostPID: true
+  resources:
+    requests:
+      cpu: 50m
+  podSecurityContext:
+    hostPID: false
+    hostIPC: false
+  securityContext:
+    hostIPC: true
+`,
+			check: func(t *testing.T, wls []Workload) {
+				t.Helper()
+				if len(wls) != 1 {
+					t.Fatalf("expected 1 workload, got %+v", wls)
+				}
+				assertBoolPtr(t, "hostPID", wls[0].Security.HostPID, true)
+				assertBoolPtr(t, "hostIPC", wls[0].Security.HostIPC, true)
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			wls, err := ParseValues(strings.NewReader(tc.in))
@@ -140,5 +185,15 @@ mike:
 				tc.check(t, wls)
 			}
 		})
+	}
+}
+
+func assertBoolPtr(t *testing.T, name string, got *bool, want bool) {
+	t.Helper()
+	if got == nil {
+		t.Fatalf("%s = nil, want %t", name, want)
+	}
+	if *got != want {
+		t.Fatalf("%s = %t, want %t", name, *got, want)
 	}
 }
